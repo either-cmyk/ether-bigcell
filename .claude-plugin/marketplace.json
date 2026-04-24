@@ -1,9 +1,14 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "ether-bigcell",
-  "owner": "njcommerce2@gmail.com",
-  "description": "이더컴퍼니 전용 마켓플레이스 — 빅셀 일일 업데이트 자동화 플러그인",
-  "plugins": [
-    {
-      "name": "ether-bigcell",
-      "source":
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    "name": "ether-bigcell",
+    "owner": "njcommerce2@gmail.com",
+    "description": "ether-bigcell marketplace",
+    "plugins": [
+          {
+                  "name": "ether-bigcell",
+                  "source": ".",
+                  "description": "BigCell daily update automation",
+                  "version": "1.0.4"
+          }
+    ]
+}
