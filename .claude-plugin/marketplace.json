@@ -1,14 +1,21 @@
 {
-    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-    "name": "ether-bigcell",
-    "owner": "njcommerce2@gmail.com",
-    "description": "ether-bigcell marketplace",
-    "plugins": [
-          {
-                  "name": "ether-bigcell",
-                  "source": ".",
-                  "description": "BigCell daily update automation",
-                  "version": "1.0.4"
-          }
-    ]
+      "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+      "name": "ether-bigcell",
+      "description": "Ether Company BigCell daily update automation marketplace",
+      "owner": {
+              "name": "Ether Company",
+              "email": "njcommerce2@gmail.com"
+      },
+      "plugins": [
+              {
+                        "name": "ether-bigcell",
+                        "description": "BigCell daily sales sync automation for 5 operating entities",
+                        "category": "automation",
+                        "source": {
+                                    "source": "url",
+                                    "url": "https://github.com/either-cmyk/ether-bigcell.git"
+                        },
+                        "homepage": "https://github.com/either-cmyk/ether-bigcell"
+              }
+      ]
 }
