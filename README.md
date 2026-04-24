@@ -1,6 +1,6 @@
 # ether-bigcell
 
-빅셀(BigCell) 로켓그로스 매출분석 일일 업데이트 완전 자동화 플러그인.
+빅셀(BigCell) 로켓그로스 매출분석 일일 업데이트 완전 자동화 플러그인 (Claude Code 마켓플레이스).
 
 ## 대상 사용자
 
@@ -15,84 +15,95 @@
 3. 구글시트 "판매 Data" 탭에 doPost (startRow = max(D열, F열) + 1)
 4. 그로스 재고 DB에 Standalone Apps Script API로 새 날짜 컬럼 삽입 + 수식 + 값 변환 + 검증
 
-## 포함 내용
+## 폴더 구조
 
 ```
 ether-bigcell/
 ├── .claude-plugin/
-│   ├── plugin.json          # 플러그인 메타
-│   └── marketplace.json     # 마켓플레이스 등록 메타
+│   ├── marketplace.json     # 마켓플레이스 메타
+│   └── plugin.json          # 플러그인 메타
 ├── skills/
 │   └── bigcell-daily-update/
 │       ├── SKILL.md                 # 스킬 본문 (v2.0.0)
-│       └── bigcell-apps-script.gs   # Standalone Apps Script 소스 (유니코드 이스케이프 적용)
+│       └── bigcell-apps-script.gs   # Standalone Apps Script 소스
 ├── memory/
-│   ├── MEMORY.md                       # 메모리 인덱스 (4개)
-│   ├── bigcell_operation_rules.md      # 15분 목표·KST 전날·비영값 검증·Ctrl+Z/H 금지
-│   ├── bigcell_config_companies.md     # 5개 사업자 시트ID/Apps Script URL/Standalone API
-│   ├── bigcell_format_rules.md         # D열 YYYY. M. D·자체상품코드 제거·클린인테크 특이
-│   └── do_not_touch_formulas.md        # 자동화 허용·임의 수정/Ctrl+H 금지·유니코드 이스케이프
-├── scripts/
-│   └── install.ps1          # Windows PowerShell 설치/업데이트 스크립트
+│   ├── MEMORY.md                       # 인덱스 (4개)
+│   ├── bigcell_operation_rules.md      # 15분 목표/KST 전날/비영값 검증/Ctrl+Z,H 금지
+│   ├── bigcell_config_companies.md     # 5개 사업자 시트ID/Apps Script URL
+│   ├── bigcell_format_rules.md         # D열 YYYY. M. D/자체상품코드 제거/클린인테크 특이
+│   └── do_not_touch_formulas.md        # 자동화 허용/임의 수정 금지/유니코드 이스케이프
+├── hooks/
+│   └── after-install.sh     # 설치 시 memory/ 파일을 사용자 메모리 폴더에 복사
 ├── CHANGELOG.md
 └── README.md
 ```
 
 ## 설치 방법
 
-### 최초 설치 (타 PC)
+### PC1 (이더컴퍼니 메인 PC)
 
-PowerShell을 관리자 권한으로 열고 다음 명령 실행:
+이미 설치되어 있음. Claude가 스킬/메모리를 수정하면 git push로 자동 동기화됩니다.
+
+로컬 repo 위치: `C:\Users\이더컴퍼니\Documents\Claude\Projects\김현기\ether-bigcell-plugin`
+
+### PC2 (타 PC에 최초 설치)
+
+#### 1. 환경 변수에 GitHub Token 설정 (1회)
+
+PowerShell을 관리자 권한으로 열고:
 
 ```powershell
-# 임시 폴더에 clone
-$tempDir = "$env:TEMP\ether-bigcell-install"
-git clone https://github.com/either-cmyk/ether-bigcell.git $tempDir
-
-# 설치 스크립트 실행
-& "$tempDir\scripts\install.ps1"
+[Environment]::SetEnvironmentVariable("GITHUB_TOKEN", "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", "User")
 ```
 
-설치 스크립트가 하는 일:
-- `%USERPROFILE%\Documents\Claude\Plugins\ether-bigcell` 에 영구 저장소 생성
-- Claude 스킬 디렉토리에 스킬 심볼릭 링크(또는 복사) 생성
-- 메모리 폴더에 메모리 4개 복사
-- Git credential helper 설정 (PAT 포함)
+PowerShell 재시작해서 `$env:GITHUB_TOKEN` 값이 잡히는지 확인.
 
-### 업데이트 (기존 설치된 PC)
+#### 2. 로컬에 마켓플레이스 clone (Private repo 우회)
 
 ```powershell
-cd "$env:USERPROFILE\Documents\Claude\Plugins\ether-bigcell"
+$marketplace = "$env:USERPROFILE\Documents\Claude\Plugins\ether-bigcell"
+New-Item -ItemType Directory -Force -Path (Split-Path $marketplace -Parent)
+git clone "https://x-access-token:$env:GITHUB_TOKEN@github.com/either-cmyk/ether-bigcell.git" $marketplace
+```
+
+#### 3. Claude 마켓플레이스에 등록
+
+Claude Code CLI 또는 Cowork에서:
+
+```
+/plugin marketplace add C:\Users\<USERNAME>\Documents\Claude\Plugins\ether-bigcell
+/plugin install ether-bigcell@ether-bigcell
+```
+
+설치 완료 시 `hooks/after-install.sh`가 자동 실행되어 메모리 4개를 로컬 메모리 폴더에 복사합니다.
+
+## 업데이트 흐름
+
+### PC1에서 변경
+
+Claude가 파일 수정 → bash로 자동 commit + push:
+
+```bash
+cd /path/to/ether-bigcell-plugin
+git add -A
+git commit -m "..."
+git push
+```
+
+(이 과정은 Claude가 알아서 처리합니다)
+
+### PC2에서 업데이트 수령
+
+```powershell
+cd $env:USERPROFILE\Documents\Claude\Plugins\ether-bigcell
 git pull
-.\scripts\install.ps1 -UpdateOnly
 ```
 
-## 사용 방법
+Claude에서:
 
-Claude에게 다음과 같이 말하면 스킬이 자동 트리거됩니다:
+```
+/plugin marketplace update
+/plugin update ether-bigcell
+```
 
-- "빅셀 업데이트 해줘"
-- "0423 이더컴퍼니 빅셀시트 갱신해줘"
-- "뉴트리정 빅셀 업데이트"
-- "빅셀 돌려줘"
-
-회사명을 지정하지 않으면 Claude가 되묻습니다.
-
-## Apps Script 재배포 (그로스 재고 DB Standalone API)
-
-기본 URL은 플러그인에 이미 내장되어 있으며, 5개 사업자 구글시트가 모두 이 URL을 바라봅니다. 타 PC에서 별도로 재배포할 필요 없습니다.
-
-만약 자체 배포가 필요한 경우 (예: URL 교체):
-
-1. `skills/bigcell-daily-update/bigcell-apps-script.gs` 내용을 복사
-2. script.google.com > 새 프로젝트 > 코드 붙여넣기
-3. 배포 > 새 배포 > 웹 앱 (실행: 나, 액세스: 모든 사용자)
-4. 새 URL을 `memory/bigcell_config_companies.md` 에 업데이트
-
-## 버전 히스토리
-
-[CHANGELOG.md](./CHANGELOG.md) 참조.
-
-## 라이선스
-
-Private — 이더컴퍼니 내부 사용.
+after-install.sh가 다시 실행되어 �

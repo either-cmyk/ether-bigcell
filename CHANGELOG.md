@@ -1,5 +1,15 @@
 # 변경 이력
 
+## v1.0.1 - 2026-04-24 (마켓플레이스 표준 전환)
+
+- `.claude-plugin/marketplace.json` 공식 스키마 준수:
+  - `owner`: 객체 → 문자열 (email)
+  - `plugins[].source`: `"."` → `"./"` + `$schema`, `category`, `tags` 추가
+- `.claude-plugin/plugin.json` author 문자열 변경 + `skills`, `hooks` 필드 명시
+- `hooks/after-install.sh` 추가 — 설치/업데이트 시 memory 4개를 사용자 Claude 메모리 폴더에 자동 복사 (POSIX 호환 Win/macOS/Linux)
+- `scripts/install.ps1` 제거 (마켓플레이스 방식으로 대체)
+- README 재작성 (`/plugin marketplace add` 기준 설치 흐름)
+
 ## v1.0.0 - 2026-04-24
 
 ### 최초 배포 (플러그인화)
@@ -14,14 +24,4 @@
   - BigCell 자체상품코드 컬럼 (col 6) 제거 로직 (`slice(0,6)+slice(7)`)
   - 타임아웃 후 동일 payload 재호출로 `skip` 응답 확인 패턴
   - 클린인테크 row[3] 덮어쓰기 금지 분기
-- Apps Script v5 (유니코드 이스케이프 배포본) 소스 포함
-- Windows PowerShell 설치 스크립트 제공
-- 타 PC 동기화 지원 (git clone/pull)
-
-### 기반 개선 내역 (v1.0.0 이전 누적)
-
-- 2026-04-15: 5개 사업자 수식 범위 유한화(`$AE$1:$AE$63111`) + 날짜 포맷(`YYYY. M. D`) 통일
-- 2026-04-22: BigCell 엑셀 자체상품코드 컬럼 추가 대응
-- 2026-04-22: 판매 Data D열 텍스트 `YYYY. M. D` 형식으로 고정
-- 2026-04-23: Apps Script 유니코드 이스케이프 적용으로 V8 UTF-8 재해석 버그 원천 차단
-- 2026-04-23~24: 그로스 재고 DB Standalone API로 완전 자동화 (자동화 유지 + Ctrl+H 금지 원칙)
+- Apps Script v5 (유니코드 이스케이프 배포본
