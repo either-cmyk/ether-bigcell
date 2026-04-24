@@ -1,0 +1,18 @@
+{
+  "name": "ether-bigcell",
+  "version": "1.0.0",
+  "description": "이더컴퍼니 빅셀(BigCell) 로켓그로스 매출분석 일일 업데이트 자동화 플러그인. 5개 사업자(이더컴퍼니/뉴트리정/마인플로/클린인테크/이든코퍼레이션) 공용. Blob intercept로 엑셀 다운로드 + 반품 필터 + 자체상품코드 컬럼 제거 + 판매 Data append + Standalone Apps Script API로 그로스 재고 DB 자동 업데이트.",
+  "author": {
+    "name": "이더컴퍼니",
+    "email": "njcommerce2@gmail.com"
+  },
+  "keywords": [
+    "bigcell",
+    "빅셀",
+    "로켓그로스",
+    "매출분석",
+    "google-sheets",
+    "apps-script",
+    "이더컴퍼니"
+  ]
+}

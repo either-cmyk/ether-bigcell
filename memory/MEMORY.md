@@ -1,0 +1,4 @@
+- [빅셀 운영 원칙](bigcell_operation_rules.md) — 15분 목표, KST 전날 하루치, gviz 비영값 검증, Ctrl+Z/Ctrl+H 금지 등 실행 원칙
+- [빅셀 회사별 설정](bigcell_config_companies.md) — 5개 사업자 시트ID/판매 Data Apps Script URL/특이사항, Standalone API URL
+- [빅셀 포맷/컬럼 규칙](bigcell_format_rules.md) — D열 YYYY. M. D 텍스트 형식, 자체상품코드 col 6 제거, 클린인테크 row[3] 금지
+- [그로스 재고 DB 자동화 원칙](do_not_touch_formulas.md) — Standalone API 자동화 유지, 수식 임의 수정·Ctrl+H 금지, 유니코드 이스케이프로 버그 원천 차단

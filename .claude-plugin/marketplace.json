@@ -1,0 +1,15 @@
+{
+  "name": "ether-bigcell-marketplace",
+  "owner": {
+    "name": "이더컴퍼니",
+    "email": "njcommerce2@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "ether-bigcell",
+      "source": ".",
+      "description": "빅셀 일일 업데이트 자동화 (5개 사업자 공용)",
+      "version": "1.0.0"
+    }
+  ]
+}
