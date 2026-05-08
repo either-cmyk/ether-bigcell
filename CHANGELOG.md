@@ -1,5 +1,11 @@
 # 변경 이력
 
+## v1.0.6 - 2026-05-08 (업데이트 플로우 테스트용 버전 bump)
+
+- 마켓플레이스 업데이트(`/plugin update ether-bigcell`) 동작 검증을 위한 버전만 bump
+- 기능 변경 없음
+
+
 ## v1.0.1 - 2026-04-24 (마켓플레이스 표준 전환)
 
 - `.claude-plugin/marketplace.json` 공식 스키마 준수:
