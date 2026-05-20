@@ -1,21 +1,15 @@
 {
-      "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ether-bigcell",
+  "description": "이더컴퍼니 전용 마켓플레이스 — 빅셀(BigCell) 로켓그로스 매출분석 일일 업데이트 자동화 플러그인",
+  "owner": {
+    "name": "Ether Company",
+    "email": "njcommerce2@gmail.com"
+  },
+  "plugins": [
+    {
       "name": "ether-bigcell",
-      "description": "Ether Company BigCell daily update automation marketplace",
-      "owner": {
-              "name": "Ether Company",
-              "email": "njcommerce2@gmail.com"
-      },
-      "plugins": [
-              {
-                        "name": "ether-bigcell",
-                        "description": "BigCell daily sales sync automation for 5 operating entities",
-                        "category": "automation",
-                        "source": {
-                                    "source": "url",
-                                    "url": "https://github.com/either-cmyk/ether-bigcell.git"
-                        },
-                        "homepage": "https://github.com/either-cmyk/ether-bigcell"
-              }
-      ]
-}
+      "description": "빅셀(BigCell) 로켓그로스 매출분석 일일 업데이트 완전 자동화 (5개 사업자 공용: 이더컴퍼니/뉴트리정/마인플로/클린인테크/이든코퍼레이션)",
+      "category": "automation",
+      "tags": [
+        "b
