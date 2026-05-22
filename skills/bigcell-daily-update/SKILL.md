@@ -329,16 +329,25 @@ var date = target.getFullYear() + '. ' + (target.getMonth()+1) + '. ' + target.g
 - `mode: 'no-cors'`는 응답이 opaque라 성공 확인 불가 — 금지
 - **빅셀 탭에서 실행**: fetch는 script.google.com 도메인 허용. gviz와 달리 CORS 문제 없음
 
-### 3-3. 클린인테크 특이 처리 (⚠️ 중요)
+### 3-3. 클린인테크 D열 날짜타입 정규화 (⚠️ 필수 — 2026-05-22 확정)
 
-**클린인테크 Apps Script는 `row[3]`을 덮어쓰면 I열 SKU ID가 파괴된다.**
+**클린인테크 doPost는 D열을 텍스트("2026. 5. 21")로 기록한다.** 반면 이더/뉴트리정은 doPost가 D열을 진짜 날짜값(Date)으로 기록하고, 그로스 재고 DB 날짜 헤더도 날짜값이라 ARRAYFORMULA가 매칭된다. 클린인테크는 텍스트 D ≠ 날짜 헤더라 매칭이 전부 실패(newNonZero=0)하여 그로스 DB가 안 채워진다. (SKU ID(I열)·옵션ID(J열)는 정상 기록되므로 row[3] 관련 과거 우려는 해소됨.)
 
-- 이더컴퍼니/뉴트리정/마인플로/이든: `row[3] = date` 덮어쓰기 정상 동작
-- **클린인테크**: row[3] 원본 유지 필수. D열(날짜)은 별도 입력 필요
+**해결: doPost 직후, 4단계(updateGrowthDB) 호출 전에 반드시 `normalizeDColumn`을 호출한다.** 그러면 D열 텍스트가 날짜값으로 변환되어 이더/뉴트리정과 완전히 동일한 구조가 된다.
 
-클린인테크 전용 처리:
-- Apps Script 자체가 row[3]을 I열로 매핑하는 단순 로직 (다른 사업자와 분리)
-- doPost 후 D열 날짜가 비어있으면 Standalone API의 `normalizeDColumn` 액션 호출 또는 수동 입력
+- 효율을 위해 **그날 startRow만** 정규화 (전체 컬럼 스캔 불필요, 타임아웃 방지)
+- 이더/뉴트리정/마인플로/이든에 호출해도 무해(이미 날짜값이면 그대로 유지) → **5개 사업자 공통 단계로 둘 것**
+
+```javascript
+(async function(){
+  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var payload = { sheetId: '해당회사시트ID', action: 'normalizeDColumn', startRow: doPost한_startRow };
+  var r = await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload), redirect:'follow'});
+  return await r.text();  // {status:'ok', normalized:N, skipped:0, empty:0}
+})()
+```
+
+검증: 정규화 후 gviz `SELECT D ... GROUP BY D`가 `2026-5-21`(대시 = 날짜타입)로 나오면 OK. 텍스트로 남으면 `2026. 5. 21`(점)으로 나온다.
 
 ### 3-4. doPost 결과 검증
 
@@ -361,6 +370,8 @@ var date = target.getFullYear() + '. ' + (target.getMonth()+1) + '. ' + target.g
 
 ## 4단계: 그로스 재고 DB 자동 업데이트 (Standalone Apps Script API)
 
+> ⚠️ **4단계 전에 3-3의 `normalizeDColumn`을 먼저 실행한다 (특히 클린인테크).** D열이 텍스트로 남아 있으면 매칭이 전부 0이 된다.
+
 UI 조작 완전 제거. 한 번의 API 호출로 다음을 모두 처리한다:
 
 1. 최신 날짜 컬럼 왼쪽에 새 컬럼 삽입
@@ -372,4 +383,148 @@ UI 조작 완전 제거. 한 번의 API 호출로 다음을 모두 처리한다:
 
 **날짜 컬럼 탐지 방식**: 오른쪽→왼쪽 스캔으로 연속 날짜 블록(그로스 재고 DB 섹션)을 정확히 식별. 시트 내 다른 영역에 날짜 형태 값이 있어도 혼동하지 않는다.
 
-### 4-1. API 호출 (구글 도�
+### 4-1. API 호출 (구글 도메인 탭에서 실행)
+
+```javascript
+(async function(){
+  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var payload = {
+    sheetId: '해당회사시트ID',
+    date: '2026. 4. 23'
+  };
+  var r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload),
+    redirect: 'follow'
+  });
+  return await r.text();
+})()
+```
+
+### 4-2. 응답 해석
+
+**정상 응답 (새 컬럼 삽입됨):**
+```json
+{
+  "status": "ok",
+  "newCol": 43, "newLetter": "AQ",
+  "oldCol": 44, "oldLetter": "AR",
+  "date": "2026. 4. 23",
+  "formulaRow": 3, "lastRow": 55,
+  "newNonZero": 72, "oldNonZero": 71,
+  "formula": "=ARRAYFORMULA(INDEX(...))"
+}
+```
+
+**중복 방지 (이미 같은 날짜 존재):**
+```json
+{
+  "status": "skip",
+  "message": "이미 동일 날짜 컬럼 존재",
+  "date": "2026. 4. 23",
+  "latestStr": "2026. 4. 23",
+  "latestCol": 42,
+  "latestLetter": "AP"
+}
+```
+
+**에러:**
+```json
+{
+  "status": "error",
+  "message": "에러 메시지"
+}
+```
+
+### 4-3. 검증 기준
+
+- `newNonZero`와 `oldNonZero`가 비슷한 수준 → **정상** (일별 판매 변동으로 약간의 차이 정상)
+- `newNonZero`가 **0** → 수식 오류 또는 날짜 포맷 불일치. 판매 Data에 해당 날짜 데이터 확인
+- 상단 행만 보고 ₩0이라서 타입 오류라고 성급히 판단 금지 — 판매량 0 상품은 정상적으로 0 표시
+
+### 4-4. 타임아웃 대응 (매우 중요)
+
+Apps Script 실행이 45초를 넘으면 클라이언트 측 CDP 타임아웃 발생. **서버에서는 계속 실행된다.**
+
+**대응 패턴**:
+1. 타임아웃 발생
+2. 30~45초 대기
+3. **같은 payload로 재호출** → `status: 'skip'` 응답이면 첫 호출이 성공적으로 완료된 것
+4. 또는 gviz로 AP/AN 등 신규 컬럼 비영값 개수 확인
+
+```javascript
+// 타임아웃 후 재확인 (동일 payload 재전송)
+// 결과가 "skip"이면 첫 호출 완료됨
+```
+
+### 4-5. 컬럼 삭제 (롤백용)
+
+잘못 삽입된 컬럼을 삭제해야 할 경우:
+
+```javascript
+(async function(){
+  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var payload = {
+    sheetId: '해당회사시트ID',
+    action: 'deleteCol',
+    col: 43
+  };
+  var r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload),
+    redirect: 'follow'
+  });
+  return await r.text();
+})()
+```
+
+### 4-6. D열 날짜 정규화 (클린인테크 전용)
+
+클린인테크 등 D열에 Date 객체/텍스트 혼재 시 강제 정규화:
+
+```javascript
+var payload = {
+  sheetId: '1AVPuPo7rkT-K923BOl2vFe5aKAHJE7bUNZM0kQ0w_PE',
+  action: 'normalizeDColumn',
+  startRow: 2  // 생략 시 2
+};
+```
+
+결과는 `{normalized, skipped, empty}` 카운트 반환.
+
+## 금지 사항 (Ctrl+H 사고 이후)
+
+1. **Ctrl+H 찾기/바꾸기로 전체 시트 수식 일괄 변경 금지** — 30,034셀 터치 전례로 불신
+2. **Claude 판단으로 수식을 임의로 고치거나 덮어쓰기 금지** (예: #REF! 발견 시 임의 복구)
+3. **판매 Data append + 그로스 재고 DB Standalone API 이외의 구조 변경 금지** (행 삽입/삭제, 서식 변경)
+4. **Ctrl+Z 금지** — UI 실수 시 되돌리기로 완료 작업 날아가는 사고 반복. 잘못 눌렀으면 Escape + 상태 재확인
+
+**허용**: 판매 Data append + Standalone API(열 추가/수식 입력)까지의 자동화는 **반드시 유지**한다 (2026-04-23 대표님 재확인). Apps Script 인코딩 버그는 `.gs` 소스에 유니코드 이스케이프(`"\uD310\uB9E4 Data"`)로 원천 차단된 버전을 배포해서 해결.
+
+## 주의사항 총정리
+
+1. **startRow는 D열+F열 max + 1**: 한쪽만 보면 덮어쓰기 사고
+2. **날짜 포맷은 YYYY. M. D**: 공백 있음, 모든 사업자 동일 (텍스트 그대로, Date 변환 금지)
+3. **자체상품코드 컬럼 제거**: `row.slice(0,6).concat(row.slice(7))` 필수 (2026-04-22 변경)
+4. **수식은 고정 템플릿**: 컬럼 레터와 행번호만 자동 생성, 구조 변경 금지
+5. **그로스 재고 DB는 API로 처리**: UI 조작 사용 금지
+6. **CORS**: gviz와 Standalone API 호출은 구글 도메인 탭에서만 실행
+7. **검증은 비영값 개수로**: newNonZero/oldNonZero 비교 또는 gviz COUNT
+8. **중복 방지 내장**: 같은 날짜로 다시 호출하면 자동 skip
+9. **타임아웃 = 서버 실행 중**: 45초 타임아웃 시 30초 후 재호출 or gviz 확인
+10. **클린인테크 row[3] 금지**: I열 SKU ID 파괴 — 분기 처리 필수
+11. **시트명 유니코드 이스케이프**: V8 UTF-8 재해석 버그 원천 차단
+12. **Ctrl+H / Ctrl+Z 절대 금지**: 과거 사고 전례
+13. **gviz는 캐시 우회 필수** (`&_t=Date.now()`): doPost 직후 행수 확인 시 옛값 반환됨
+14. **45초 타임아웃은 정상 동작**: 서버는 계속 실행 중 → 30~45초 대기 후 동일 payload 재호출 시 `skip` 응답이면 완료
+15. **빅셀 계정 전환은 `/mypage/members` navigate**: 드롭다운으로 일일이 전환하지 않음
+16. **다운로드 첫 클릭은 종종 실패**: "Claude is active" 알림 닫기 + 재클릭 2~3회까지 정상
+17. **탭 freeze 시 새 탭으로 우회**: Apps Script 호출 후 V8 컨텍스트 unresponsive 자주 발생, 새 탭에서 docs.google.com 열고 작업 이어감
+
+## 첨부 파일
+
+- `bigcell-apps-script.gs`: Standalone Apps Script 소스 (v5, 유니코드 이스케이프 적용)
+  - 배포 URL: `https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec`
+  - 타 PC에서 자체 배포 시: Apps Script > 새 프로젝트 > 내용 붙여넣기 > 배포 > 웹 앱 (실행: 나, 액세스: 모든 사용자) > URL 저장
