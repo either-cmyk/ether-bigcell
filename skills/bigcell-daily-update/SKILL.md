@@ -1,6 +1,6 @@
 ---
 name: bigcell-daily-update
-description: 빅셀(BigCell) 로켓그로스 매출분석 엑셀 다운로드 → 반품 제거 → 자체상품코드 컬럼 제거 → 구글시트 판매 Data append → 그로스 재고 DB 날짜 컬럼 삽입(Standalone API)까지의 일일 데이터 업데이트 완전 자동화 스킬. 반드시 이 스킬을 사용해야 하는 경우 "빅셀 업데이트", "빅셀 일일", "매출분석 업데이트", "그로스 시트 업데이트", "빅셀 데이터 넣어줘", "이더컴퍼니 업데이트", "뉴트리정 업데이트", "클린인 업데이트", "마인플로 업데이트", "이든코퍼레이션 업데이트" 등 빅셀 매출 데이터를 구글시트에 반영하는 모든 요청. 사용자가 "빅셀"이나 회사명 + "업데이트/시트/데이터" 키워드를 언급하면 이 스킬을 사용할 것.
+description: 빅셀(BigCell) 로켓그로스 매출분석 엑셀 다운로드 → 반품 제거 → 시트 헤더 이름기준 컬럼 매핑 → 구글시트 판매 Data append → 그로스 재고 DB 날짜 컬럼 삽입(Standalone API)까지의 일일 데이터 업데이트 완전 자동화 스킬. 반드시 이 스킬을 사용해야 하는 경우 "빅셀 업데이트", "빅셀 일일", "매출분석 업데이트", "그로스 시트 업데이트", "빅셀 데이터 넣어줘", "이더컴퍼니 업데이트", "뉴트리정 업데이트", "클린인 업데이트", "마인플로 업데이트", "이든코퍼레이션 업데이트" 등 빅셀 매출 데이터를 구글시트에 반영하는 모든 요청. 사용자가 "빅셀"이나 회사명 + "업데이트/시트/데이터" 키워드를 언급하면 이 스킬을 사용할 것.
 ---
 
 # 빅셀 일일 업데이트 스킬 (v2.2.0 - 2026-05-20 실전 운용 노하우 통합)
@@ -9,7 +9,7 @@ description: 빅셀(BigCell) 로켓그로스 매출분석 엑셀 다운로드 �
 
 ## 핵심 방법론
 
-1. 빅셀에서 Blob intercept + SheetJS로 브라우저 내 엑셀 파싱 + 반품 필터링 + **자체상품코드(col 6) 제거**
+1. 빅셀에서 Blob intercept + SheetJS로 엑셀 파싱 + 반품 필터링 + **시트 헤더 이름기준 컬럼 매핑(45필드)**
 2. gviz로 **D열과 F열 모두** 조회하여 안전한 startRow 확인 (max + 1)
 3. doPost로 판매 Data 탭에 데이터 전송 (회사별 Apps Script URL, YYYY. M. D 날짜 포맷)
 4. **Standalone Apps Script API**로 그로스 재고 DB 자동 업데이트 (컬럼 삽입 + 수식 채우기 + 값 변환 + 검증)
@@ -41,13 +41,19 @@ description: 빅셀(BigCell) 로켓그로스 매출분석 엑셀 다운로드 �
 
 회사명을 지정하지 않으면 반드시 물어볼 것.
 
-| 회사 | 빅셀 계정 | 시트 ID | 판매 Data Apps Script (바운드) |
-|------|-----------|---------|------------------------------|
-| 이더컴퍼니 | 이더컴퍼니 | `1pfikkAKbYOtgxIjFZYtwa1G4CIQLnMcbw2OaZTiWUuU` | `AKfycbwUSbLqE2VMYyhh9_wUuaqDUa0oGwZntiTMxBruQHtjNydyyeXwIolSSpgUE8Bob1woFg` |
-| 뉴트리정 | 뉴트리정 | `1Fai97aHOhzY5lPBpQBo8d1ji32oaaX5q6_3TgQKHWzE` | `AKfycbww_NhWrZOIB6jeOI6jteayITp2cLgq2HS6GDD1QGXNI90b5HmDgF7KqSo-yhEVybYM` |
-| 마인플로 | 마인플로 | `12eHkB_6cGvEM5EYfDontmxEM1WgIsBSDPVHNRTsWeII` | `AKfycbwjBYbt6xBN0tZyEOR6G3qtHd1CyGoW4aCF8soVHVWYqAYkiLDbCbMcabl1lJJsnGvnug` |
-| 클린인테크 | 클린인테크 | `1AVPuPo7rkT-K923BOl2vFe5aKAHJE7bUNZM0kQ0w_PE` | `AKfycbxbxpiqzuCqyml1PBqM3aG4Okz9Vpg0Eft27nU4Af6Q2KtJGAjmYJHSMoELObnokkMUUA` |
-| 이든코퍼레이션 | 이든코퍼레이션 | `1ow9OBUrjJYjtuANyGBRCCEqkktfUwwKVk8oyv6oypbY` | `AKfycbzajDaT-bJwY48ak5v04l1euvIEzpMbQMieVZoQToYjWVQMfCzswQcGN2CyiMJRy7wF` |
+| 회사 | 빅셀 계정 | 시트 ID |
+|------|-----------|---------|
+| 이더컴퍼니 | 이더컴퍼니 | `1pfikkAKbYOtgxIjFZYtwa1G4CIQLnMcbw2OaZTiWUuU` |
+| 뉴트리정 | 뉴트리정 | `1Fai97aHOhzY5lPBpQBo8d1ji32oaaX5q6_3TgQKHWzE` |
+| 마인플로 | 마인플로 | `12eHkB_6cGvEM5EYfDontmxEM1WgIsBSDPVHNRTsWeII` |
+| 클린인테크 | 클린인테크 | `1AVPuPo7rkT-K923BOl2vFe5aKAHJE7bUNZM0kQ0w_PE` |
+| 이든코퍼레이션 | 이든코퍼레이션 | `1ow9OBUrjJYjtuANyGBRCCEqkktfUwwKVk8oyv6oypbY` |
+
+### 판매 Data doPost (5개 사업자 공용, hg.kim 배포)
+
+- **URL**: `https://script.google.com/macros/s/AKfycbxZ6SCV0k98aVdqfg5t11KlTAt2JPSM-PDqKp94x0oEIXQllumH3OEqAjDEG5x7FQLs/exec`
+- 이 URL 하나로 5개 사업자 모두 처리. payload에 **`sheetId` 파라미터로 대상 구분** (그로스 API와 동일 방식).
+- 실행 계정 = hg.kim@either.co.kr (워크스페이스, 익명 액세스 허용됨). openById(sheetId)로 각 시트의 '판매 Data' 탭 F열부터 기록 + D열 날짜.
 
 - 판매 Data gid (모든 사업자): `1453058054`
 - Apps Script URL 형식: `https://script.google.com/macros/s/<ID>/exec`
@@ -55,7 +61,7 @@ description: 빅셀(BigCell) 로켓그로스 매출분석 엑셀 다운로드 �
 
 ### 그로스 재고 DB Standalone Apps Script (5개 사업자 공용)
 
-- **URL**: `https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec`
+- **URL**: `https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec`
 - **프로젝트**: `https://script.google.com/home/projects/1k16QVe1DpF-GU1t9UwcXDHalRs5Xdzbu5Imf1PUNpLzwTnGvQCZC36zJ/edit`
 - 이 URL 하나로 5개 사업자 모두의 그로스 재고 DB 업데이트. `sheetId` 파라미터로 대상 구분
 - 타 PC에서 재배포 시 이 스킬의 `bigcell-apps-script.gs` 파일을 Standalone 프로젝트로 deploy 하면 동일 동작
@@ -228,7 +234,7 @@ document.head.appendChild(s);
 
 우측 상단의 다운로드 버튼을 클릭하면 `window.__downloadBlob`에 Blob이 캡처된다.
 
-### 1-5. Blob 파싱 + 반품 필터링 + **자체상품코드 컬럼 제거**
+### 1-5. Blob 파싱 + 반품 필터링 + **이름기준 컬럼 매핑(45필드)**
 
 **2026-04-22부터 BigCell export에 col 6=자체상품코드가 추가됨.** 판매 Data로 보내기 전 반드시 제거해야 기존 시트 구조(L=판매가)와 일치한다.
 
@@ -248,26 +254,37 @@ BigCell 엑셀 컬럼 구조 (2026-04-22~):
 
 ```javascript
 (async function(){
+  // ★ 이름기준 매핑: 빅셀 엑셀이 컬럼을 추가/재배치해도 시트 헤더 필드명 순서로 재정렬.
+  //   slice 고정제거(옛 방식)는 빅셀 컬럼 변동 시 판매수량/재고가 밀려 들어가므로 금지.
+  //   판매 Data 시트 헤더 F~AX = 45필드(아래 순서). N번째 동일이름 매칭 + 품절예상일 부분매칭.
+  var sheetFields = ["스토어명","노출상품ID","상품명","SKU ID","옵션ID","옵션명","판매가","원가","수입단가","이익금","고객반품(최근30일)","반품률","최근7일 일일 평균판매량","본사 발주검토","본사 입고예정","본사 입고예정일","본사재고","쿠팡 입고예정","쿠팡 입고예정 원가","쿠팡재고","재고금액","재고합계","쿠팡입고필요수량","품절예상일","쿠팡보관비(이번달)","판매수량","판매수량 원가","광고 판매수량","광고 판매수량 비율","자연 판매수량","자연 판매수량 비율","할인전매출","매출","이익금","순이익금","순이익금 비율","광고집행비","광고집행비 비율","광고매출","광고매출 비율","광고판매전환율","광고 ROAS","광고집행 이익금","광고집행 순이익금","광고집행 순이익율"];
+  function norm(x){ return String(x||'').replace(/\s+/g,'').replace(/[()]/g,'').trim(); }
   var blob = window.__downloadBlob;
   var buf = await blob.arrayBuffer();
   var wb = XLSX.read(buf, {type:'array'});
   var ws = wb.Sheets[wb.SheetNames[0]];
   var allRows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-  var header0 = allRows[0];
-  // col 6이 자체상품코드인지 헤더로 확인
-  var col6IsSelfCode = String(header0[6]||'').indexOf('자체') >= 0;
-  var filtered = [];
-  var skippedEmpty = 0, skippedReturn = 0;
+  var bh = allRows[0].map(norm);
+  var usedCount = {};
+  function findIdx(sfRaw){
+    var sf = norm(sfRaw), occ = usedCount[sf]||0, seen = 0;
+    for(var i=0;i<bh.length;i++){ if(bh[i]===sf){ if(seen===occ){ usedCount[sf]=occ+1; return i; } seen++; } }
+    for(var i=0;i<bh.length;i++){ if(bh[i] && (bh[i].indexOf(sf)>=0 || sf.indexOf(bh[i])>=0)) return i; } // 품절예상일↔쿠팡품절예상일
+    return -1;
+  }
+  var mapping = sheetFields.map(findIdx);
+  if(mapping.indexOf(-1) >= 0) return JSON.stringify({error:'unmapped', which: mapping.map(function(m,k){return m<0?sheetFields[k]:null;}).filter(Boolean)});
+  var filtered = [], skippedReturn = 0;
   for(var i=2; i<allRows.length; i++){
     var row = allRows[i];
-    if(!String(row[0]||'').trim()){ skippedEmpty++; continue; }
+    if(!String(row[0]||'').trim()) continue;
     if(String(row[5]||'').indexOf('반품') >= 0){ skippedReturn++; continue; }
-    // 자체상품코드 컬럼 제거
-    var stripped = col6IsSelfCode ? row.slice(0,6).concat(row.slice(7)) : row;
-    filtered.push(stripped);
+    filtered.push(mapping.map(function(idx){ return row[idx]; }));  // 45필드 F열순 정렬
   }
   window.__filtered = filtered;
-  return JSON.stringify({total: allRows.length, col6IsSelfCode: col6IsSelfCode, count: filtered.length, skippedReturn: skippedReturn, colCount: filtered[0]?filtered[0].length:0});
+  // 검증: 판매수량(idx25=AE)이 전 행 채워지는지 (이전엔 30/1279처럼 적게 채워지면 정렬 깨진 것)
+  var aeFilled=0; filtered.forEach(function(r){ var v=r[25]; if(v!==''&&v!=null&&!isNaN(Number(v))) aeFilled++; });
+  return JSON.stringify({count: filtered.length, cols: filtered[0]?filtered[0].length:0, skippedReturn: skippedReturn, AE_filled: aeFilled});
 })()
 ```
 
@@ -294,7 +311,7 @@ BigCell 엑셀 컬럼 구조 (2026-04-22~):
 
 ## 3단계: 판매 Data 탭에 데이터 전송 + 검증
 
-payload 키는 `startRow`, `rows`, `date` 3개만 사용. 다른 키 사용 금지.
+payload 키는 `sheetId`, `startRow`, `rows`, `date` 4개 사용. (단일 doPost URL이라 sheetId로 대상 시트 지정)
 
 ### 3-1. 날짜 포맷 생성
 
@@ -310,10 +327,10 @@ var date = target.getFullYear() + '. ' + (target.getMonth()+1) + '. ' + target.g
 ```javascript
 (async function(){
   var allRows = window.__filtered;
-  var url = "해당회사 판매 Data Apps Script URL";
+  var url = "https://script.google.com/macros/s/AKfycbxZ6SCV0k98aVdqfg5t11KlTAt2JPSM-PDqKp94x0oEIXQllumH3OEqAjDEG5x7FQLs/exec"; // hg.kim 공용 doPost
   var startRow = 2단계결과값;
   var date = "YYYY. M. D";
-  var payload = { startRow: startRow, rows: allRows, date: date };
+  var payload = { sheetId: '해당회사 시트ID', startRow: startRow, rows: allRows, date: date };
   var r = await fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'text/plain'},
@@ -340,7 +357,7 @@ var date = target.getFullYear() + '. ' + (target.getMonth()+1) + '. ' + target.g
 
 ```javascript
 (async function(){
-  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var url = "https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec";
   var payload = { sheetId: '해당회사시트ID', action: 'normalizeDColumn', startRow: doPost한_startRow };
   var r = await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload), redirect:'follow'});
   return await r.text();  // {status:'ok', normalized:N, skipped:0, empty:0}
@@ -387,7 +404,7 @@ UI 조작 완전 제거. 한 번의 API 호출로 다음을 모두 처리한다:
 
 ```javascript
 (async function(){
-  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var url = "https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec";
   var payload = {
     sheetId: '해당회사시트ID',
     date: '2026. 4. 23'
@@ -464,7 +481,7 @@ Apps Script 실행이 45초를 넘으면 클라이언트 측 CDP 타임아웃 �
 
 ```javascript
 (async function(){
-  var url = "https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec";
+  var url = "https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec";
   var payload = {
     sheetId: '해당회사시트ID',
     action: 'deleteCol',
@@ -507,7 +524,7 @@ var payload = {
 
 1. **startRow는 D열+F열 max + 1**: 한쪽만 보면 덮어쓰기 사고
 2. **날짜 포맷은 YYYY. M. D**: 공백 있음, 모든 사업자 동일 (텍스트 그대로, Date 변환 금지)
-3. **자체상품코드 컬럼 제거**: `row.slice(0,6).concat(row.slice(7))` 필수 (2026-04-22 변경)
+3. **컬럼 이름기준 매핑 필수**: 빅셀이 컬럼 추가/재배치해도 시트 헤더(F~AX 45필드)명으로 재정렬. slice 고정제거 금지. 판매수량(AE)이 전 행 채워지는지로 검증 (2026-06-10 개정)
 4. **수식은 고정 템플릿**: 컬럼 레터와 행번호만 자동 생성, 구조 변경 금지
 5. **그로스 재고 DB는 API로 처리**: UI 조작 사용 금지
 6. **CORS**: gviz와 Standalone API 호출은 구글 도메인 탭에서만 실행
@@ -526,5 +543,5 @@ var payload = {
 ## 첨부 파일
 
 - `bigcell-apps-script.gs`: Standalone Apps Script 소스 (v5, 유니코드 이스케이프 적용)
-  - 배포 URL: `https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec`
+  - 배포 URL: `https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec`
   - 타 PC에서 자체 배포 시: Apps Script > 새 프로젝트 > 내용 붙여넣기 > 배포 > 웹 앱 (실행: 나, 액세스: 모든 사용자) > URL 저장

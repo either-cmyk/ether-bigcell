@@ -5,7 +5,7 @@
  * 오른쪽→왼쪽 스캔으로 연속 날짜 블록(그로스 재고 DB 섹션) 정확히 찾기
  * Date 객체/텍스트 모두 지원
  *
- * 배포 URL: https://script.google.com/macros/s/AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA/exec
+ * 배포 URL: https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec
  * 프로젝트: https://script.google.com/home/projects/1k16QVe1DpF-GU1t9UwcXDHalRs5Xdzbu5Imf1PUNpLzwTnGvQCZC36zJ/edit
  */
 

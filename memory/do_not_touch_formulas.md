@@ -27,7 +27,7 @@ type: feedback
 ## How to apply
 
 1. 빅셀 doPost(판매 Data append) 수행
-2. Standalone Apps Script API (`AKfycbzgZvLhXAHv1qQh7wzxktp4NcPnydIYNo9QyP6VWkRFKkKsmhWeGj6Hr50EY_8FSADyTA`) 호출해서 그로스 재고 DB 열 추가/수식 입력 자동화
+2. Standalone Apps Script API (`AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM`) 호출해서 그로스 재고 DB 열 추가/수식 입력 자동화
 3. `.gs` 소스는 시트명을 반드시 유니코드 이스케이프(`"\uD310\uB9E4 Data"`)로 작성 — 한글 리터럴 금지 (V8 UTF-8→Latin-1 재해석 버그)
 4. 수식이 깨져 있거나 #REF! 발견해도 Ctrl+H 금지. 사용자에게 먼저 알리고 지시 받을 것
 5. 찾기/바꾸기(Ctrl+H) 전체 시트 적용 절대 금지

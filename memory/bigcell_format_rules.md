@@ -80,7 +80,7 @@ var date = target.getFullYear() + '. ' + (target.getMonth()+1) + '. ' + target.g
 - `row[3] = '2026. 4. 21'` 덮어써도 내부 로직이 D열(날짜)와 I열(SKU ID)을 분리해서 정상 처리
 - 기존 방식 그대로 유지 가능
 
-### 클린인테크 Apps Script (AKfycbxbxpiqzuCqyml1...)
+### 클린인테크 (2026-06-10부터 5사 공용 doPost URL AKfycbxZ6SCV... 사용, sheetId 지정)
 - row[3]을 그대로 I열에 넣는 **단순 로직**
 - row[3]을 덮어쓰면 I열 SKU ID가 날짜로 파괴됨
 - 결과: AP열 ARRAYFORMULA 매칭 실패
