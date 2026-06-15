@@ -10,7 +10,21 @@ type: reference
 - **판매 Data doPost (5사 공용, hg.kim 배포)**: `https://script.google.com/macros/s/AKfycbxZ6SCV0k98aVdqfg5t11KlTAt2JPSM-PDqKp94x0oEIXQllumH3OEqAjDEG5x7FQLs/exec` — payload에 `sheetId` 지정. openById(sheetId)로 각 시트 '판매 Data' F열부터 기록+D열 날짜. 실행=hg.kim@either.co.kr(워크스페이스, 익명허용)
 - 날짜 포맷: `YYYY. M. D` (공백 있음, 월/일 앞자리 0 없음)
 - 컬럼 처리: **시트 헤더(판매 Data F~AX 45필드) 이름기준 매핑** (slice 고정제거 금지)
-- 수식 템플릿: `=ARRAYFORMULA(INDEX('판매 Data'!$AE$1:$AE$63111, MATCH(1, ('판매 Data'!$J$1:$J$63111=$E{row})*('판매 Data'!$D$1:$D$63111={colLetter}$2), 0)))`
+- 수식 템플릿(v7+): `=ARRAYFORMULA(IFERROR(INDEX('판매 Data'!$AE$1:$AE$63111, MATCH(1, ('판매 Data'!$J$1:$J$63111=$<옵션열>{row})*('판매 Data'!$D$1:$D$63111={colLetter}$2), 0)), 0))`
+  - **IFERROR(...,0)**: 그날 판매 0(빅셀 export에 행 없음)이면 #N/A 대신 0 표시 (v7).
+  - **옵션열은 사업자마다 다름** → API가 자동 감지(11자리 숫자 열). 아래 표 참조.
+
+### 그로스 옵션ID 매칭 열 (★사업자별 상이)
+
+| 사업자 | 옵션열 |
+|--------|--------|
+| 이더컴퍼니 | E |
+| 마인플로 | E |
+| 클린인테크 | E |
+| 이든코퍼레이션 | E |
+| **뉴트리정** | **F** |
+
+→ 뉴트리정만 F, 나머지 4개 E. Standalone API v6+가 `detectOptionCol`로 자동 감지하므로 수동 지정 불필요(과거 $E 하드코딩 버그는 v6에서 해결).
 
 ## 사업자별 설정
 
@@ -40,7 +54,7 @@ type: reference
 ## 그로스 재고 DB Standalone Apps Script (5개 사업자 공용)
 
 - **URL**: `https://script.google.com/macros/s/AKfycby2JKRW6hBypZve_E8O6HbmXP5o8crRfwGvGGeNNVmuJqoE8vtDYyRrmQCzjYEcwBOM/exec`
-- 실행 계정 = hg.kim@either.co.kr (2026-06-10 이전 완료). 코드는 본 플러그인 bigcell-apps-script.gs와 동일
+- 실행 계정 = hg.kim@either.co.kr (2026-06-10 이전 완료). 코드(v8)는 본 플러그인 bigcell-apps-script.gs와 동일. GET시 type:standalone-growthDB-v8
 - sheetId 파라미터로 대상 구분
 - 코드 소스: 본 플러그인의 `skills/bigcell-daily-update/bigcell-apps-script.gs`
 
@@ -51,6 +65,8 @@ type: reference
 | (기본) | `{sheetId, date}` | 새 날짜 컬럼 삽입 + 수식 + 값변환 + 검증 |
 | `deleteCol` | `{sheetId, action:'deleteCol', col:N}` | 컬럼 삭제 (롤백용) |
 | `normalizeDColumn` | `{sheetId, action:'normalizeDColumn', startRow:N}` | D열 Date/텍스트 혼재를 Date 객체로 정규화 |
+| `rewrapLatest` | `{sheetId, action:'rewrapLatest'}` | 이미 삽입된 최신 날짜열 수식을 v7(IFERROR) 템플릿으로 재작성 (#N/A→0 보정, 빈 컬럼 살리기) |
+| `etherizeDates` | `{sheetId, action:'etherizeDates'}` | 날짜 헤더 텍스트/MM-DD 혼합을 MM/DD 날짜값으로 통일 (백업 탭 생성 + 최신열 freeze + 헤더 변환). 클린인 2026-06-15 적용 |
 
 ### Standalone API 응답 상태
 

@@ -1,5 +1,14 @@
 # 변경 이력
 
+## v2.3.1 - 2026-06-15 (번들 메모리 현행화 — 결과 일관성)
+
+번들 메모리가 옛 directive를 담고 있어 타 PC 설치 시 다른 결과가 날 수 있던 문제 정정:
+- **bigcell_format_rules.md**: ❌"텍스트가 정답·normalizeDColumn 금지" 폐기 → 클린인테크는 doPost 직후 `normalizeDColumn` 필수. 컬럼 처리도 slice 고정제거 → **이름기준 45필드 매핑**으로 교체. 그로스 날짜헤더 **MM/DD 날짜값 표준**(etherizeDates) 명시.
+- **bigcell_config_companies.md**: 그로스 **옵션ID 매칭열이 사업자별 상이**(뉴트리정 F / 나머지 E, API v6+ 자동감지) 표 추가. 수식 템플릿을 v7 `IFERROR(...,0)`로 갱신. API 액션표에 `rewrapLatest`·`etherizeDates` 추가.
+- **do_not_touch_formulas.md**: Ctrl+H·임의 수식수정 금지는 Claude 단독판단 기준 — **사용자 명시 요청 시 백업 후 허용** 예외 명시.
+- **MEMORY.md**: 인덱스 설명 현행화.
+
+
 ## v2.3.0 - 2026-06-15 (번들 Apps Script v5 → v8: 옵션자동감지·IFERROR·날짜정규화)
 
 - **번들 `bigcell-apps-script.gs`를 v5 → v8로 교체** (배포는 같은 프로젝트 새 버전이라 URL 불변: `AKfycby2JKRW6hBypZve...`).

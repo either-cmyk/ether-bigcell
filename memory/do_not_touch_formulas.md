@@ -38,3 +38,9 @@ type: feedback
 - `"판매 Data"` → `"\uD310\uB9E4 Data"`
 - 시트 불러오기: `ss.getSheetByName("\uD310\uB9E4 Data")`
 - 수식 조립: `"=ARRAYFORMULA(INDEX('" + "\uD310\uB9E4 Data" + "'!$AE..."`
+
+## 예외: 사용자가 명시적으로 요청한 변경은 허용 (2026-06-15)
+
+- "Ctrl+H 금지 / 임의 수식 수정 금지"는 **Claude 단독 판단** 기준. 사용자가 명시 요청하면 수행한다.
+- 예: 클린인테크 날짜 헤더를 이더 스타일(MM/DD 날짜값)로 통일 → v8 `etherizeDates`로 처리(백업 선행, 데이터 무손상 검증).
+- 원칙: ① 백업 먼저(시트 복사 or 백업 탭) ② 변경 후 판매Data와 그로스 교차검증(합계·#N/A·불일치 0) ③ 일일 파이프라인(updateGrowthDB) 로직은 건드리지 않음.

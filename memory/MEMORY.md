@@ -1,4 +1,4 @@
 - [빅셀 운영 원칙](bigcell_operation_rules.md) — 15분 목표, KST 전날 하루치, gviz 비영값 검증, Ctrl+Z/Ctrl+H 금지 등 실행 원칙
-- [빅셀 회사별 설정](bigcell_config_companies.md) — 5개 사업자 시트ID/판매 Data Apps Script URL/특이사항, Standalone API URL
-- [빅셀 포맷/컬럼 규칙](bigcell_format_rules.md) — D열 YYYY. M. D 텍스트 형식, 자체상품코드 col 6 제거, 클린인테크 row[3] 금지
-- [그로스 재고 DB 자동화 원칙](do_not_touch_formulas.md) — Standalone API 자동화 유지, 수식 임의 수정·Ctrl+H 금지, 유니코드 이스케이프로 버그 원천 차단
+- [빅셀 회사별 설정](bigcell_config_companies.md) — 5개 사업자 시트ID, hg.kim 단일 doPost URL+sheetId, 그로스 v8 Standalone API URL, 옵션ID 매칭열(뉴트리정 F/나머지 E), API 액션(기본/deleteCol/normalizeDColumn/rewrapLatest/etherizeDates)
+- [빅셀 포맷/컬럼 규칙](bigcell_format_rules.md) — 이름기준 45필드 매핑(slice 폐기), 클린인 normalizeDColumn 필수(텍스트정답 메모 폐기), 그로스 날짜헤더 MM/DD 날짜값 표준(etherizeDates)
+- [그로스 재고 DB 자동화 원칙](do_not_touch_formulas.md) — Standalone API 자동화 유지, Claude 단독 임의 수식수정·Ctrl+H 금지(단 사용자 명시 요청은 백업 후 허용), 유니코드 이스케이프로 버그 차단
