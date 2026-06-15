@@ -1,5 +1,14 @@
 # 변경 이력
 
+## v2.3.0 - 2026-06-15 (번들 Apps Script v5 → v8: 옵션자동감지·IFERROR·날짜정규화)
+
+- **번들 `bigcell-apps-script.gs`를 v5 → v8로 교체** (배포는 같은 프로젝트 새 버전이라 URL 불변: `AKfycby2JKRW6hBypZve...`).
+  - **v6**: 그로스 일별판매 수식의 옵션ID 매칭 컬럼 **자동감지**(11자리 숫자 탐지). 뉴트리정만 F열, 이더/마인플로/클린인/이든은 E열인데 v5가 `$E` 하드코딩이라 뉴트리정 매칭 0이던 버그 해결.
+  - **v7**: 날짜 컬럼 수식을 `IFERROR(INDEX/MATCH, 0)`으로 감쌈 → 그날 판매 0(빅셀 export에 행 없음)인 상품이 `#N/A` 대신 **0** 표시. `action:'rewrapLatest'` 추가(이미 삽입된 최신 날짜열을 IFERROR로 재작성).
+  - **v8**: `action:'etherizeDates'` 추가 → 날짜 헤더가 텍스트(`2026. M. D`)·MM/DD 혼합인 시트(클린인테크)를 이더 스타일(전부 MM/DD 날짜값)로 정리. ①gid0 백업 탭 복사 ②최신 날짜열 수식→값 freeze ③row2 날짜헤더→Date값+`mm/dd` 형식. 판매Data D·다른 수식·일일 파이프라인 무변경.
+- GET 응답 `type` 이 `standalone-growthDB-v8` 로 변경됨.
+
+
 ## v2.2.0 - 2026-06-10 (hg.kim 계정 이전 + 이름기준 컬럼 매핑)
 
 - **Apps Script 배포 계정 이전**: 개인계정(rlagusrl31) → 회사 워크스페이스 hg.kim@either.co.kr
