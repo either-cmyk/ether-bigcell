@@ -1,5 +1,6 @@
 /**
- * 빅셀 그로스 재고 DB 업데이트 - 독립형(Standalone) v8
+ * 빅셀 그로스 재고 DB 업데이트 - 독립형(Standalone) v9
+ * v9 추가: detectOptionCol에 sheetId별 옵션ID 열 맵(이더=E,뉴트리정=F) + 여러행 다수결 자동감지. (이더 옵션ID 오탐 버그 수정)
  * v8 추가: action:'etherizeDates' — 클린인테크 등 날짜 헤더가 텍스트("2026. M. D")·MM/DD 혼합인 시트를
  *          이더컴퍼니 스타일(전부 MM/DD 날짜값)로 정리. 데이터 안 깨지게:
  *            (1) gid=0 시트를 백업 탭으로 복사
@@ -12,7 +13,7 @@
  *          { sheetId, action:'etherizeDates' }
  */
 function doGet(e) {
-  return resp({status: 'ready', type: 'standalone-growthDB-v8'});
+  return resp({status: 'ready', type: 'standalone-growthDB-v9'});
 }
 
 function doPost(e) {
@@ -147,13 +148,29 @@ function isDateValue(v) {
   return /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/.test(s);
 }
 
-function detectOptionCol(sheet) {
+// ★v9: sheetId별 옵션ID 열 명시 (이더/마인플로/클린인/이든=E(5), 뉴트리정=F(6)).
+//      맵에 없으면 row3~여러행 다수결로 11자리 옵션ID 열 자동감지(노출상품ID 오탐 방지).
+var OPT_COL_MAP = {
+  '1pfikkAKbYOtgxIjFZYtwa1G4CIQLnMcbw2OaZTiWUuU': 5, // 이더컴퍼니 E
+  '12eHkB_6cGvEM5EYfDontmxEM1WgIsBSDPVHNRTsWeII': 5, // 마인플로 E
+  '1AVPuPo7rkT-K923BOl2vFe5aKAHJE7bUNZM0kQ0w_PE': 5, // 클린인테크 E
+  '1ow9OBUrjJYjtuANyGBRCCEqkktfUwwKVk8oyv6oypbY': 5, // 이든코퍼레이션 E
+  '1Fai97aHOhzY5lPBpQBo8d1ji32oaaX5q6_3TgQKHWzE': 6  // 뉴트리정 F
+};
+function detectOptionCol(sheet, ssId) {
+  if (ssId && OPT_COL_MAP[ssId]) return OPT_COL_MAP[ssId];
   var lastCol = sheet.getLastColumn();
-  var probe = sheet.getRange(3, 1, 1, Math.min(lastCol, 14)).getValues()[0];
-  for (var c = 2; c < probe.length; c++) {
-    if (/^\d{11}$/.test(String(probe[c]).trim())) return c + 1;
+  var lastRow = sheet.getLastRow();
+  var n = Math.max(1, Math.min(lastRow - 2, 30));
+  var W = Math.min(lastCol, 14);
+  var probe = sheet.getRange(3, 1, n, W).getValues();
+  var best = 0, bestC = 5;
+  for (var c = 2; c < W; c++) {
+    var cnt = 0;
+    for (var r = 0; r < probe.length; r++) { if (/^\d{11}$/.test(String(probe[r][c]).trim())) cnt++; }
+    if (cnt > best) { best = cnt; bestC = c + 1; }
   }
-  return 5;
+  return best > 0 ? bestC : 5;
 }
 
 /** 최신(=가장 왼쪽) 날짜 컬럼. Date값/텍스트 둘 다 인식. */
@@ -178,7 +195,7 @@ function rewrapLatest(data) {
   var dateStr = dateToStr(sheet.getRange(2, latestCol).getValue());
   var lastRow = sheet.getLastRow();
   var fRow = 3;
-  var optCol = detectOptionCol(sheet);
+  var optCol = detectOptionCol(sheet, data.sheetId);
   var optLetter = colLetter(optCol);
   var SHEET_NAME = PMDATA();
   var formula = buildFormula(SHEET_NAME, optLetter, fRow, newL);
@@ -226,7 +243,7 @@ function updateGrowthDB(data) {
   var newL = colLetter(newCol);
   var lastRow = sheet.getLastRow();
   var fRow = 3;
-  var optCol = detectOptionCol(sheet);
+  var optCol = detectOptionCol(sheet, data.sheetId);
   var optLetter = colLetter(optCol);
   var SHEET_NAME = PMDATA();
   var formula = buildFormula(SHEET_NAME, optLetter, fRow, newL);
