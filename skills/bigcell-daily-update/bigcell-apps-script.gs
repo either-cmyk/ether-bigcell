@@ -1,5 +1,6 @@
 /**
- * 빅셀 그로스 재고 DB 업데이트 - 독립형(Standalone) v9
+ * 빅셀 그로스 재고 DB 업데이트 - 독립형(Standalone) v10
+ * v10 추가: action:'updateByValue' — 무거운 시트(이더)용. 새 날짜컬럼 삽입 + 당일 판매수량을 '값'으로 직접 채움(수식 재계산 없음 → timeout 회피). 판매Data D열=날짜(Asia/Seoul), J열=옵션ID, AE열=판매수량 매칭.
  * v9 추가: detectOptionCol에 sheetId별 옵션ID 열 맵(이더=E,뉴트리정=F) + 여러행 다수결 자동감지. (이더 옵션ID 오탐 버그 수정)
  * v8 추가: action:'etherizeDates' — 클린인테크 등 날짜 헤더가 텍스트("2026. M. D")·MM/DD 혼합인 시트를
  *          이더컴퍼니 스타일(전부 MM/DD 날짜값)로 정리. 데이터 안 깨지게:
@@ -13,7 +14,7 @@
  *          { sheetId, action:'etherizeDates' }
  */
 function doGet(e) {
-  return resp({status: 'ready', type: 'standalone-growthDB-v9'});
+  return resp({status: 'ready', type: 'standalone-growthDB-v10'});
 }
 
 function doPost(e) {
@@ -24,6 +25,7 @@ function doPost(e) {
     if (data.action === 'normalizeDColumn') return normalizeDColumn(data);
     if (data.action === 'rewrapLatest') return rewrapLatest(data);
     if (data.action === 'etherizeDates') return etherizeDates(data);
+    if (data.action === 'updateByValue') return updateByValue(data);
     if (!data.date) return resp({error: 'date 누락'});
     return updateGrowthDB(data);
   } catch(err) {
@@ -216,6 +218,62 @@ function rewrapLatest(data) {
   }
   return resp({status:'ok', action:'rewrapLatest', latestCol:latestCol, latestLetter:newL, date:dateStr,
     optionCol:optCol, optionLetter:optLetter, lastRow:lastRow, nonZero:nz, zero:zero, naRemaining:naCount});
+}
+
+/** ★v10: 무거운 시트용 — 새 날짜컬럼 삽입 + 당일 판매수량을 값으로 직접 채움(수식/재계산 없음). */
+function updateByValue(data) {
+  var date = data.date.trim();
+  var ss = SpreadsheetApp.openById(data.sheetId);
+  var sheet = getGid0Sheet(ss);
+  if (!sheet) return resp({error: 'gid=0 시트 없음'});
+  var tz = ss.getSpreadsheetTimeZone() || 'Asia/Seoul';
+  // 최신 날짜컬럼 탐지 + 중복 체크
+  var lastCol = sheet.getLastColumn();
+  var row2 = sheet.getRange(2, 1, 1, lastCol).getValues()[0];
+  var rightIdx = -1;
+  for (var i = row2.length - 1; i >= 0; i--) { if (isDateValue(row2[i])) { rightIdx = i; break; } }
+  if (rightIdx < 0) return resp({error: '날짜 컬럼을 찾을 수 없음'});
+  var leftIdx = rightIdx;
+  for (var i = rightIdx - 1; i >= 0; i--) { if (isDateValue(row2[i])) { leftIdx = i; } else break; }
+  var latestCol = leftIdx + 1;
+  if (dateToStr(row2[latestCol - 1]) === date) {
+    return resp({status: 'skip', message: '이미 동일 날짜 컬럼 존재', date: date, latestLetter: colLetter(latestCol)});
+  }
+  // 판매 Data 당일 옵션ID→판매수량 맵 (값 계산)
+  var pd = ss.getSheetByName(PMDATA());
+  if (!pd) return resp({error: '판매 Data 시트 없음'});
+  var pdLast = pd.getLastRow();
+  var pv = pd.getRange(1, 1, pdLast, 31).getValues(); // A..AE
+  var map = {};
+  for (var i = 0; i < pv.length; i++) {
+    var d = pv[i][3];
+    var ds = (d && typeof d.getTime === 'function') ? Utilities.formatDate(d, tz, 'yyyy. M. d') : String(d).trim();
+    if (ds === date) {
+      var opt = String(pv[i][9]).trim();
+      map[opt] = (map[opt] || 0) + (Number(pv[i][30]) || 0);
+    }
+  }
+  var optCount = 0; for (var k in map) optCount++;
+  // 새 컬럼 삽입 + 헤더
+  sheet.insertColumnBefore(latestCol);
+  var newCol = latestCol;
+  sheet.getRange(2, newCol).setValue(date);
+  // 옵션ID 열 기준 값 채움
+  var optCol = detectOptionCol(sheet, data.sheetId);
+  var gLast = sheet.getLastRow();
+  var fRow = 3;
+  var ev = sheet.getRange(1, optCol, gLast, 1).getValues();
+  var out = [], matched = 0;
+  for (var i = fRow - 1; i < gLast; i++) {
+    var opt = String(ev[i][0]).trim();
+    if (map.hasOwnProperty(opt)) { out.push([map[opt]]); matched++; }
+    else out.push([0]);
+  }
+  if (out.length > 0) sheet.getRange(fRow, newCol, out.length, 1).setValues(out);
+  SpreadsheetApp.flush();
+  return resp({status: 'ok', action: 'updateByValue', newCol: newCol, newLetter: colLetter(newCol),
+    optionCol: optCol, optionLetter: colLetter(optCol), date: date, lastRow: gLast,
+    dateOptCount: optCount, matched: matched});
 }
 
 function updateGrowthDB(data) {
