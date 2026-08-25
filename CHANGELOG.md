@@ -1,5 +1,13 @@
 # 변경 이력
 
+## v2.4.3 (2026-08-25) — plugin.json 매니페스트 스키마 오류 수정 (설치 불가 해결)
+
+### plugin.json v2.4.3
+- `author` 필드를 문자열 → 객체(`{name, email}`)로 수정 (스키마 검증 실패 원인 1)
+- `hooks.afterInstall` 제거: 지원되지 않는 훅 형식이며 참조 파일 `hooks/after-install.sh`도 레포에 없어 설치가 거부됨 (원인 2)
+- 이 두 오류로 `claude plugin install` 시 "invalid manifest file" 에러가 발생하여 플러그인 설치/저장이 불가능했음 — 수정 후 설치 정상 확인
+
+
 ## v2.4.2 (2026-08-24) — 검증 기준 보정 + 재기록 경계 확인 규칙
 
 ### SKILL.md v2.4.2
